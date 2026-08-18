@@ -616,6 +616,23 @@ function resetAll(){
   localStorage.removeItem('toronbeot'); location.reload();
 }
 restore();
+/* 딥링크: ?demo=1&tab=p4&focus=bad — 데모 자동 로드 후 지정 탭으로 (시연·캡처용) */
+const qp=new URLSearchParams(location.search);
+if(qp.get('demo')==='1'){
+  document.querySelectorAll('.gate').forEach(c=>c.checked=true);
+  $('bookTitle').value=DEMO_TITLE;
+  $('excerptInput').value=DEMO_EXCERPT;
+  registerExcerpt();
+  $('logInput').value=DEMO_LOG;
+  runVerify();
+  go(qp.get('tab')||'p4');
+  if(qp.get('focus')==='bad'){
+    setTimeout(()=>{
+      const el=document.querySelector('#replayArea .qmark.bad');
+      if(el) window.scrollTo(0, el.getBoundingClientRect().top+window.scrollY-300);
+    },150);
+  }
+}
 </script>
 </body>
 </html>
