@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>토론벗 — 독서토론 검증 플랫폼</title>
+<style>
+:root{
+  --navy:#1F3A5F; --navy-d:#16293F; --ink:#222833; --sub:#5B6572;
+  --line:#E3E7EC; --bg:#F4F6F8; --card:#FFFFFF;
+  --ok:#1E7F4F; --ok-bg:#E7F5EC; --warn:#B67B00; --warn-bg:#FBF3DC; --bad:#C2372E; --bad-bg:#FBE9E7;
+  --accent:#E8A33D;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI','Malgun Gothic',Pretendard,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+header{background:var(--navy);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{font-size:20px;font-weight:700}
+header .tag{font-size:12px;opacity:.75}
+header .spacer{flex:1}
+.btn{display:inline-block;border:none;border-radius:8px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;background:var(--navy);color:#fff}
+.btn:hover{background:var(--navy-d)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn.ghost:hover{background:#f0f2f5}
+.btn.accent{background:var(--accent);color:#3A2A08}
+.btn.accent:hover{filter:brightness(.95)}
+.btn.sm{padding:5px 11px;font-size:12.5px;border-radius:6px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+nav{display:flex;gap:4px;background:#fff;border-bottom:1px solid var(--line);padding:0 24px;overflow-x:auto}
+nav button{border:none;background:none;padding:13px 16px;font-size:14.5px;font-weight:600;color:var(--sub);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+nav button.active{color:var(--navy);border-bottom-color:var(--accent)}
+nav button .n{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--line);color:var(--sub);font-size:12px;margin-right:6px}
+nav button.active .n{background:var(--navy);color:#fff}
+nav button.done .n{background:var(--ok);color:#fff}
+main{max-width:1060px;margin:0 auto;padding:26px 20px 80px}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px;margin-bottom:18px}
+.card h2{font-size:17px;margin-bottom:6px}
+.card h3{font-size:15px;margin-bottom:6px}
+.card .desc{font-size:13.5px;color:var(--sub);margin-bottom:14px}
+textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;font-size:14px;font-family:inherit;resize:vertical;background:#FCFDFE}
+textarea:focus,input:focus{outline:2px solid #9FB6D4}
+input[type=text]{border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit}
+label.chk{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;font-size:14px;cursor:pointer;background:#FCFDFE}
+label.chk input{margin-top:4px}
+label.chk b{display:block}
+label.chk span{font-size:12.5px;color:var(--sub)}
+.para{display:flex;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.para:last-child{border-bottom:none}
+.para .num{flex:none;width:34px;height:26px;border-radius:6px;background:var(--navy);color:#fff;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.pill.gray{background:#EEF1F4;color:var(--sub)}
+.prompt-card{border:1px solid var(--line);border-radius:10px;margin-bottom:14px;overflow:hidden}
+.prompt-card .head{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#F8FAFC;border-bottom:1px solid var(--line)}
+.prompt-card .head h3{margin:0;font-size:14.5px;flex:1}
+.prompt-card pre{padding:14px 16px;font-size:13px;font-family:inherit;white-space:pre-wrap;color:#333;max-height:230px;overflow-y:auto;background:#fff}
+.copied{background:var(--ok)!important;color:#fff!important}
+.chat{display:flex;flex-direction:column;gap:14px}
+.turn{max-width:88%;border-radius:12px;padding:13px 16px;font-size:14px;position:relative}
+.turn.me{align-self:flex-end;background:#E3EDF9;border:1px solid #C9DCF2}
+.turn.ai{align-self:flex-start;background:#fff;border:1px solid var(--line)}
+.turn .who{font-size:11.5px;font-weight:700;color:var(--sub);margin-bottom:5px;display:flex;gap:8px;align-items:center}
+.turn .body{white-space:pre-wrap}
+.qmark{border-radius:6px;padding:1px 4px;cursor:pointer;font-weight:600}
+.qmark.ok{background:var(--ok-bg);color:var(--ok);border-bottom:2px solid var(--ok)}
+.qmark.warn{background:var(--warn-bg);color:var(--warn);border-bottom:2px solid var(--warn)}
+.qmark.bad{background:var(--bad-bg);color:var(--bad);border-bottom:2px solid var(--bad)}
+.badge-row{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:14px 0}
+.stat{border:1px solid var(--line);border-radius:10px;padding:16px;text-align:center;background:#fff}
+.stat .v{font-size:34px;font-weight:800}
+.stat .l{font-size:13px;color:var(--sub);margin-top:2px}
+.stat.ok .v{color:var(--ok)}.stat.warn .v{color:var(--warn)}.stat.bad .v{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:#F8FAFC;font-size:12.5px;color:var(--sub)}
+.diff-del{background:var(--bad-bg);color:var(--bad);text-decoration:line-through}
+.diff-ins{background:var(--ok-bg);color:var(--ok);font-weight:700}
+.detail{border:1px solid var(--line);border-left-width:5px;border-radius:8px;padding:13px 16px;margin-bottom:12px;background:#fff;font-size:13.5px}
+.detail.ok{border-left-color:var(--ok)}.detail.warn{border-left-color:var(--warn)}.detail.bad{border-left-color:var(--bad)}
+.detail .q{font-weight:600;margin-bottom:4px}
+.detail .meta{font-size:12.5px;color:var(--sub)}
+.note{background:#F0F4F9;border-radius:8px;padding:12px 16px;font-size:13px;color:#37485E;margin:12px 0}
+.empty{text-align:center;color:var(--sub);padding:44px 0;font-size:14px}
+.flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grow{flex:1}
+select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff}
+footer{text-align:center;font-size:12px;color:var(--sub);padding:26px}
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 22px;border-radius:99px;font-size:13.5px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:99}
+.toast.show{opacity:1}
+@media print{
+  header,nav,.no-print,footer{display:none!important}
+  body{background:#fff}
+  .card{border:none;padding:0}
+  main{padding:0}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>📖 토론벗</h1>
+  <span class="tag">발췌문 안에서만 말하게 하고, 인용은 코드로 확인합니다</span>
+  <span class="spacer"></span>
+  <button class="btn accent" onclick="loadDemo()">▶ 데모 데이터 불러오기</button>
+  <button class="btn ghost" style="color:#fff;border-color:#3d5a82" onclick="resetAll()">초기화</button>
+</header>
+
+<nav id="nav">
+  <button data-p="p1" class="active" onclick="go('p1')"><span class="n">1</span>발췌문</button>
+  <button data-p="p2" onclick="go('p2')"><span class="n">2</span>프롬프트 카드</button>
+  <button data-p="p3" onclick="go('p3')"><span class="n">3</span>인용 검증</button>
+  <button data-p="p4" onclick="go('p4')"><span class="n">4</span>배지 리플레이</button>
+  <button data-p="p5" onclick="go('p5')"><span class="n">5</span>리포트</button>
+</nav>
+
+<main>
+
+<!-- ============ 1. 발췌문 ============ -->
+<section class="panel active" id="p1">
+  <div class="card">
+    <h2>저작권 확인</h2>
+    <p class="desc">세 가지 모두 "예"일 때만 발췌문을 등록할 수 있습니다. 발췌문 파일은 외부에 공유하지 않습니다.</p>
+    <label class="chk"><input type="checkbox" class="gate"><div><b>작자와 시기</b><span>작자 미상 고전이거나, 원작자 사후 70년이 지난 작품입니다.</span></div></label>
+    <label class="chk"><input type="checkbox" class="gate"><div><b>번역본 여부</b><span>시중 번역본·현대어 역본을 그대로 옮기지 않았습니다.</span></div></label>
+    <label class="chk"><input type="checkbox" class="gate"><div><b>직접 풀어쓰기</b><span>원문에서 직접 번역했거나 새로 서술했습니다.</span></div></label>
+  </div>
+  <div class="card">
+    <h2>발췌문 등록</h2>
+    <p class="desc">빈 줄로 문단을 구분해 붙여 넣으세요. 문단 번호 [1]~[n]은 자동으로 붙습니다. 권장: 10~15문단, 문단당 3~5문장.</p>
+    <div class="flex" style="margin-bottom:10px">
+      <input type="text" id="bookTitle" placeholder="책 제목 (예: 동물농장)" style="width:280px">
+    </div>
+    <textarea id="excerptInput" rows="10" placeholder="발췌문을 붙여 넣으세요. 빈 줄로 문단을 구분합니다."></textarea>
+    <div class="flex" style="margin-top:12px">
+      <button class="btn" onclick="registerExcerpt()">발췌문 등록</button>
+      <span id="excerptMsg" style="font-size:13px;color:var(--sub)"></span>
+    </div>
+  </div>
+  <div class="card" id="excerptViewCard" style="display:none">
+    <div class="flex"><h2 class="grow">등록된 발췌문 <span id="excerptTitleLabel" class="pill gray"></span></h2><span id="paraCount" class="pill ok"></span></div>
+    <div id="excerptView" style="margin-top:10px"></div>
+  </div>
+</section>
+
+<!-- ============ 2. 프롬프트 카드 ============ -->
+<section class="panel" id="p2">
+  <div class="note">아래 카드를 <b>복사</b>해서 여러분이 쓰는 챗봇(ChatGPT·Claude·Gemini 등)에 붙여 넣으세요. 발췌문이 카드 안에 함께 들어가므로 파일 첨부가 필요 없습니다. 챗봇의 결과는 <b>3단계 인용 검증</b>에 다시 붙여 넣습니다.</div>
+  <div id="cardArea"><div class="empty">먼저 1단계에서 발췌문을 등록하세요.</div></div>
+</section>
+
+<!-- ============ 3. 검증 ============ -->
+<section class="panel" id="p3">
+  <div class="card">
+    <h2>인용 검증</h2>
+    <p class="desc">챗봇이 만든 결과(논제·근거카드) 또는 토론 로그 전체를 붙여 넣으세요. <b>「근거 원문: …」 표기와 따옴표 인용</b>을 찾아 발췌문과 한 글자 단위로 대조합니다. 검증에는 AI를 쓰지 않습니다 — 몇 번을 돌려도 같은 결과가 나오는 코드 대조입니다.</p>
+    <textarea id="logInput" rows="12" placeholder="예)
+나: 시작하자. 네가 먼저 반박해줘.
+AI: 주장: 완전한 평등은 유지되기 어렵습니다.
+근거 원문: &quot;모든 동물은 평등하다&quot; (문단 3)
+..."></textarea>
+    <div class="flex" style="margin-top:12px">
+      <button class="btn" onclick="runVerify()">⚙ 검증 실행</button>
+      <span id="verifyMsg" style="font-size:13px;color:var(--sub)"></span>
+    </div>
+  </div>
+  <div id="verifySummary"></div>
+</section>
+
+<!-- ============ 4. 리플레이 ============ -->
+<section class="panel" id="p4">
+  <div class="card no-print" style="padding:14px 22px">
+    <div class="flex">
+      <h2 class="grow" style="font-size:16px">배지 리플레이</h2>
+      <span class="pill ok">✓ 일치</span><span class="pill warn">~ 유사</span><span class="pill bad">✗ 없음</span>
+    </div>
+    <p class="desc" style="margin:6px 0 0">인용 표시를 클릭하면 판정 근거(원문 대조)를 볼 수 있습니다. ✗ 없음은 발췌문에 없는 환각 인용입니다 — 지우지 말고 "왜 이 문장을 진짜처럼 말했을까"를 수업 소재로 쓰세요.</p>
+  </div>
+  <div class="card"><div id="replayArea"><div class="empty">3단계에서 검증을 실행하면 토론이 재생됩니다.</div></div></div>
+</section>
+
+<!-- ============ 5. 리포트 ============ -->
+<section class="panel" id="p5">
+  <div id="reportArea"><div class="empty">3단계에서 검증을 실행하면 리포트가 생성됩니다.</div></div>
+</section>
+
+</main>
+
+<footer>토론벗 · AI에이전트연수 2회차 「독서토론」의 서비스화 데모 · 검증 엔진 v1.0 (LLM 미사용 결정적 대조) · 판정과 확정은 사람이 합니다</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= 상태 ================= */
+const S = {
+  title:'', paras:[], gate:false,
+  quotes:[], turns:[], verifiedAt:null, logRaw:''
+};
+const ENGINE_VER = '1.0';
+
+function save(){ localStorage.setItem('toronbeot', JSON.stringify({title:S.title,paras:S.paras,gate:S.gate,logRaw:S.logRaw})); }
+function restore(){
+  try{
+    const d = JSON.parse(localStorage.getItem('toronbeot')||'null');
+    if(!d) return;
+    S.title=d.title||''; S.paras=d.paras||[]; S.gate=!!d.gate; S.logRaw=d.logRaw||'';
+    if(S.gate) document.querySelectorAll('.gate').forEach(c=>c.checked=true);
+    document.getElementById('bookTitle').value=S.title;
+    document.getElementById('logInput').value=S.logRaw;
+    if(S.paras.length){ renderExcerpt(); renderCards(); markDone('p1'); }
+  }catch(e){}
+}
+
+/* ================= 유틸 ================= */
+function $(id){return document.getElementById(id)}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
+function go(p){
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+  $(p).classList.add('active');
+  document.querySelector(`nav button[data-p=${p}]`).classList.add('active');
+  window.scrollTo(0,0);
+}
+function markDone(p){ document.querySelector(`nav button[data-p=${p}]`).classList.add('done'); }
+function copyText(txt, btn){
+  navigator.clipboard.writeText(txt).then(()=>{
+    btn.classList.add('copied'); const o=btn.textContent; btn.textContent='복사됨 ✓';
+    setTimeout(()=>{btn.classList.remove('copied');btn.textContent=o;},1600);
+    toast('클립보드에 복사했습니다. 챗봇에 붙여 넣으세요.');
+  });
+}
+function download(name, text){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:'text/markdown;charset=utf-8'}));
+  a.download=name; a.click(); URL.revokeObjectURL(a.href);
+}
+
+/* ================= 1. 발췌문 ================= */
+function registerExcerpt(){
+  const gates=[...document.querySelectorAll('.gate')];
+  if(!gates.every(g=>g.checked)){ $('excerptMsg').textContent='⚠ 저작권 확인 세 가지에 모두 체크해야 등록할 수 있습니다.'; return; }
+  const raw=$('excerptInput').value.trim();
+  if(!raw){ $('excerptMsg').textContent='발췌문을 붙여 넣어 주세요.'; return; }
+  let paras = raw.split(/\n\s*\n/).map(p=>p.replace(/^\s*\[?\d+\]?[.\)]?\s*/,'').replace(/\s*\n\s*/g,' ').trim()).filter(Boolean);
+  S.title = $('bookTitle').value.trim()||'제목 없음';
+  S.paras = paras; S.gate=true;
+  save(); renderExcerpt(); renderCards(); markDone('p1');
+  $('excerptMsg').textContent='';
+  const warn = (paras.length<10||paras.length>15) ? ` (권장 10~15문단을 벗어났습니다 — 등록은 됩니다)` : '';
+  toast(`발췌문 ${paras.length}문단 등록 완료${warn}`);
+  go('p2');
+}
+function renderExcerpt(){
+  $('excerptViewCard').style.display='block';
+  $('excerptTitleLabel').textContent=S.title;
+  $('paraCount').textContent=`${S.paras.length}문단`;
+  $('excerptView').innerHTML = S.paras.map((p,i)=>`<div class="para"><span class="num">${i+1}</span><span>${esc(p)}</span></div>`).join('');
+}
+
+/* ================= 2. 프롬프트 카드 ================= */
+function excerptBlock(){
+  return `--- 발췌문: ${S.title} (총 ${S.paras.length}문단) ---\n`+S.paras.map((p,i)=>`[${i+1}] ${p}`).join('\n')+`\n--- 발췌문 끝 ---`;
+}
+function cardDefs(){
+  const topicN = $('topicSel') ? $('topicSel').value : '1';
+  const myTopic = $('ruleTopic') ? $('ruleTopic').value.trim() : '';
+  const mySide  = $('ruleSide') ? $('ruleSide').value : '찬성';
+  return [
+    {id:'check', name:'카드 0 · 업로드 확인', tip:'붙여넣은 뒤 챗봇이 발췌문을 제대로 읽었는지 먼저 확인합니다.',
+     text:`아래 발췌문을 이번 대화의 기준 자료로 사용한다.\n\n${excerptBlock()}\n\n확인 질문: 이 발췌문의 총 문단 수와 3번 문단의 첫 문장을 그대로 말해줘. 아직 다른 것은 만들지 마.`},
+    {id:'topics', name:'카드 1 · 논제 3종', tip:'찬반이 팽팽한 논제 3개 + 원문 인용 + 문단 번호.',
+     text:`위 발췌문을 읽고 찬반이 팽팽하게 갈리는 토론 논제 3개를 만들어줘.\n\n형식(반드시 지켜):\n논제 1: (논제 문장)\n근거 원문: "(발췌문의 문장을 한 글자도 바꾸지 말고 그대로)" (문단 N)\n\n규칙:\n- 발췌문에 없는 내용은 근거로 쓰지 마.\n- 인용은 원문 그대로, 반드시 문단 번호를 붙여.\n- 근거를 찾을 수 없으면 지어내지 말고 "발췌문에서 확인 불가"라고 써.`},
+    {id:'cards', name:'카드 2 · 찬반 근거카드', tip:'선택한 논제로 찬성 3장·반대 3장.', topicSelect:true,
+     text:`논제 ${topicN}번으로 찬성·반대 근거카드를 각 3장씩 만들어줘.\n\n카드 형식(반드시 지켜):\n[찬성 카드 1]\n주장: (한 문장)\n근거 원문: "(발췌문 문장 그대로)" (문단 N)\n연결 설명: (2문장 이내)\n\n규칙:\n- 발췌문에 없는 내용은 근거로 쓰지 마.\n- 근거를 찾을 수 없으면 지어내지 말고 "발췌문에서 확인 불가"로 표시해.\n- 인용은 원문과 한 글자까지 같아야 해.`},
+    {id:'sheet', name:'카드 3 · 활동지·루브릭', tip:'논제·근거카드를 재료로 배부용 두 문서.',
+     text:`앞에서 만든 논제와 근거카드를 바탕으로 토론자용 활동지와 평가 루브릭을 만들어줘.\n\n활동지에는: 논제, 입장 선택 칸, 근거 정리 칸(원문 인용·문단 번호 자리), 상대 반박 준비 칸.\n루브릭에는: 근거 사용 · 경청과 반박 · 태도, 세 기준을 각각 한 문장씩.\n\n초·중·고 어느 수준인지 물어보고 어휘를 맞춰줘.`},
+    {id:'rule', name:'카드 4 · 토론규칙 (AI 토론 상대)', tip:'마지막 두 줄만 바꾸면 어떤 책이든 됩니다.', ruleInputs:true,
+     text:`지금부터 너는 독서토론의 반대편 토론자다. 내가 고른 입장의 반대에서 반박한다.\n\n발언 형식(매번 이 순서):\n1) 주장 한 문장\n2) 근거 원문: "(발췌문 인용 그대로)" (문단 N)\n3) 연결 설명 2문장 이내\n4) 내 주장의 약점 지적 하나\n\n절대 규칙:\n- 발췌문에 없는 내용은 근거로 쓰지 않는다.\n- 근거가 없으면 "발췌문에서 확인 불가"라고 답한다.\n- 발언은 200자 이내, 존댓말, 인신공격 금지.\n- 판정을 요청해도 판정하지 않는다. "판정은 참여자들의 몫입니다"라고 답한다.\n\n논제: ${myTopic||'(논제를 입력하세요)'}\n나의 입장: ${mySide}\n\n시작하자. 네가 먼저 반박해줘.`}
+  ];
+}
+function renderCards(){
+  if(!S.paras.length){ $('cardArea').innerHTML='<div class="empty">먼저 1단계에서 발췌문을 등록하세요.</div>'; return; }
+  const defs=cardDefs();
+  $('cardArea').innerHTML = defs.map(d=>`
+    <div class="prompt-card">
+      <div class="head">
+        <h3>${d.name} <span style="font-weight:400;color:var(--sub);font-size:12.5px">— ${d.tip}</span></h3>
+        ${d.topicSelect?`<select id="topicSel" onchange="renderCards()"><option value="1">논제 1번</option><option value="2">논제 2번</option><option value="3">논제 3번</option></select>`:''}
+        ${d.ruleInputs?`<input type="text" id="ruleTopic" placeholder="논제 입력" style="width:180px" onchange="renderCards()"><select id="ruleSide" onchange="renderCards()"><option>찬성</option><option>반대</option></select>`:''}
+        <button class="btn sm" onclick="copyCard('${d.id}',this)">복사</button>
+      </div>
+      <pre id="cardtext-${d.id}">${esc(d.text)}</pre>
+    </div>`).join('');
+  // 값 유지
+}
+function copyCard(id,btn){
+  const d=cardDefs().find(x=>x.id===id);
+  copyText(d.text, btn);
+}
+
+/* ================= 검증 엔진 (LLM 미사용) ================= */
+function normalize(s){
+  return s.replace(/["'"'「」『』‘’“”]/g,'')
+          .replace(/[\s ]/g,'')
+          .replace(/[.,!?…·:;()\[\]（）\-–—~〜]/g,'');
+}
+function bigrams(s){ const r=[]; for(let i=0;i<s.length-1;i++) r.push(s.slice(i,i+2)); return r; }
+function dice(a,b){
+  if(!a.length||!b.length) return 0;
+  if(a===b) return 1;
+  const A=bigrams(a), B=bigrams(b);
+  if(!A.length||!B.length) return a===b?1:0;
+  const m=new Map(); A.forEach(g=>m.set(g,(m.get(g)||0)+1));
+  let inter=0;
+  B.forEach(g=>{ const c=m.get(g)||0; if(c>0){inter++; m.set(g,c-1);} });
+  return 2*inter/(A.length+B.length);
+}
+function splitSentences(p){
+  return p.split(/(?<=[.!?다요죠]["'"'」』]?)\s+/).map(s=>s.trim()).filter(s=>s.length>1);
+}
+/* LCS 기반 문자 diff */
+function charDiff(a,b){
+  const n=a.length,m=b.length;
+  if(n*m>400000) return [[0,a]]; // 안전장치
+  const dp=Array.from({length:n+1},()=>new Uint16Array(m+1));
+  for(let i=1;i<=n;i++)for(let j=1;j<=m;j++)
+    dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]+1:Math.max(dp[i-1][j],dp[i][j-1]);
+  const ops=[]; let i=n,j=m;
+  while(i>0&&j>0){
+    if(a[i-1]===b[j-1]){ops.push([0,a[i-1]]);i--;j--;}
+    else if(dp[i-1][j]>=dp[i][j-1]){ops.push([-1,a[i-1]]);i--;}
+    else{ops.push([1,b[j-1]]);j--;}
+  }
+  while(i>0){ops.push([-1,a[i-1]]);i--;}
+  while(j>0){ops.push([1,b[j-1]]);j--;}
+  ops.reverse();
+  // 병합
+  const merged=[];
+  ops.forEach(([t,c])=>{
+    if(merged.length&&merged[merged.length-1][0]===t) merged[merged.length-1][1]+=c;
+    else merged.push([t,c]);
+  });
+  return merged;
+}
+function diffHtml(quote, source){
+  return charDiff(quote,source).map(([t,c])=>{
+    if(t===0) return esc(c);
+    if(t===-1) return `<span class="diff-del">${esc(c)}</span>`;
+    return `<span class="diff-ins">${esc(c)}</span>`;
+  }).join('');
+}
+/* 인용 판정 */
+function judgeQuote(q){
+  const nq=normalize(q);
+  if(nq.length<4) return null;
+  // 1) 완전 일치
+  for(let i=0;i<S.paras.length;i++){
+    if(normalize(S.paras[i]).includes(nq)) return {verdict:'일치', para:i+1, best:null, sim:1};
+  }
+  // 2) 유사 — 문장 1~2개 윈도우 단위 최고 유사도
+  let best={sim:0, para:0, sent:''};
+  S.paras.forEach((p,i)=>{
+    const sents=splitSentences(p);
+    const windows=[...sents];
+    for(let k=0;k<sents.length-1;k++) windows.push(sents[k]+' '+sents[k+1]);
+    windows.forEach(sent=>{
+      const s=dice(nq, normalize(sent));
+      if(s>best.sim) best={sim:s, para:i+1, sent};
+    });
+  });
+  if(best.sim>=0.8) return {verdict:'유사', para:best.para, best:best.sent, sim:best.sim};
+  return {verdict:'없음', para:null, best:best.sim>=0.5?best.sent:null, sim:best.sim};
+}
+/* 인용 추출 */
+function extractQuotes(text){
+  const found=[]; const seen=new Set();
+  const push=(q,claimed,idx)=>{
+    q=q.trim().replace(/^["'"'「『]|["'"'」』]$/g,'').trim();
+    if(q.length<4) return;
+    const key=normalize(q); if(seen.has(key))return; seen.add(key);
+    found.push({text:q, claimed, idx});
+  };
+  // 근거 원문: "..." (문단 N)
+  const re1=/근거\s*원문\s*[::]\s*(.+?)(?:[\(（]\s*문단\s*(\d+)\s*[\)）]|$)/gm;
+  let m;
+  while((m=re1.exec(text))) push(m[1], m[2]?+m[2]:null, m.index);
+  // "..." (문단 N) 일반형
+  const re2=/["“「]([^"”「」]{4,120})["”」]\s*[\(（]\s*문단\s*(\d+)\s*[\)）]/g;
+  while((m=re2.exec(text))) push(m[1], +m[2], m.index);
+  return found.sort((a,b)=>a.idx-b.idx);
+}
+/* 턴 분해 */
+function parseTurns(text){
+  const lines=text.split('\n');
+  const turns=[]; let cur=null;
+  const speakerRe=/^\s*\[?(나|사용자|학생|AI|상대|챗봇|토론자|GPT|ChatGPT|Claude|클로드|Gemini|제미나이)\]?\s*[::]\s*(.*)$/i;
+  lines.forEach(line=>{
+    const m=line.match(speakerRe);
+    if(m){
+      if(cur) turns.push(cur);
+      const who=m[1];
+      const me=/^(나|사용자|학생)$/i.test(who);
+      cur={who, me, body:m[2]};
+    } else if(cur){
+      cur.body+='\n'+line;
+    } else if(line.trim()){
+      cur={who:'기록', me:false, body:line};
+    }
+  });
+  if(cur) turns.push(cur);
+  return turns.map(t=>({...t, body:t.body.trim()})).filter(t=>t.body);
+}
+
+/* ================= 3. 검증 실행 ================= */
+function runVerify(){
+  if(!S.paras.length){ $('verifyMsg').textContent='⚠ 먼저 1단계에서 발췌문을 등록하세요.'; return; }
+  const raw=$('logInput').value.trim();
+  if(!raw){ $('verifyMsg').textContent='검증할 텍스트를 붙여 넣어 주세요.'; return; }
+  S.logRaw=raw; save();
+  const t0=performance.now();
+  const quotes=extractQuotes(raw).map(q=>({...q, ...judgeQuote(q.text)})).filter(q=>q.verdict);
+  S.quotes=quotes;
+  S.turns=parseTurns(raw);
+  S.verifiedAt=new Date();
+  const ms=(performance.now()-t0).toFixed(0);
+  $('verifyMsg').textContent='';
+  renderVerifySummary(ms);
+  renderReplay();
+  renderReport();
+  markDone('p3'); markDone('p4'); markDone('p5');
+  if(!quotes.length){ toast('인용을 찾지 못했습니다. 「근거 원문:」 표기를 확인하세요.'); return; }
+  toast(`인용 ${quotes.length}건 검증 완료 (${ms}ms)`);
+}
+function counts(){
+  return {
+    ok:S.quotes.filter(q=>q.verdict==='일치').length,
+    warn:S.quotes.filter(q=>q.verdict==='유사').length,
+    bad:S.quotes.filter(q=>q.verdict==='없음').length
+  };
+}
+function renderVerifySummary(ms){
+  const c=counts();
+  if(!S.quotes.length){
+    $('verifySummary').innerHTML=`<div class="card"><div class="empty">추출된 인용이 없습니다.<br>챗봇 출력에 「근거 원문: "…" (문단 N)」 표기가 있는지 확인하세요. 프롬프트 카드에는 이 형식이 이미 들어 있습니다.</div></div>`;
+    return;
+  }
+  $('verifySummary').innerHTML=`
+  <div class="card">
+    <h2>검증 결과 요약 <span style="font-size:12px;color:var(--sub);font-weight:400">엔진 v${ENGINE_VER} · ${ms}ms · 같은 입력이면 항상 같은 결과</span></h2>
+    <div class="stat-grid">
+      <div class="stat"><div class="v">${S.quotes.length}</div><div class="l">추출된 인용</div></div>
+      <div class="stat ok"><div class="v">${c.ok}</div><div class="l">✓ 일치</div></div>
+      <div class="stat warn"><div class="v">${c.warn}</div><div class="l">~ 유사</div></div>
+      <div class="stat bad"><div class="v">${c.bad}</div><div class="l">✗ 없음 (환각 의심)</div></div>
+    </div>
+    ${c.bad?`<div class="note" style="background:var(--bad-bg);color:var(--bad)"><b>환각 인용 ${c.bad}건이 잡혔습니다.</b> 발췌문에 없는 문장입니다. 4단계 리플레이에서 어느 발언인지 확인하세요 — 지우지 말고 수업 소재로 쓰는 것을 권합니다.</div>`:`<div class="note" style="background:var(--ok-bg);color:var(--ok)">모든 인용이 발췌문 안에서 확인되었습니다.</div>`}
+    <div class="flex no-print" style="margin-top:8px">
+      <button class="btn" onclick="go('p4')">배지 리플레이 보기 →</button>
+      <button class="btn ghost" onclick="go('p5')">리포트 보기</button>
+    </div>
+  </div>`;
+}
+
+/* ================= 4. 리플레이 ================= */
+function markQuotesInBody(body){
+  // 긴 인용부터 토큰으로 치환해 짧은 인용이 그 안을 다시 물지 않게 한다
+  let txt=body;
+  const tokens=[];
+  const sorted=S.quotes.map((q,i)=>({q,i})).sort((a,b)=>b.q.text.length-a.q.text.length);
+  sorted.forEach(({q,i})=>{
+    if(txt.includes(q.text)){
+      const tok=`${tokens.length}`;
+      tokens.push({tok,q,i});
+      txt=txt.split(q.text).join(tok);
+    }
+  });
+  let html=esc(txt);
+  tokens.forEach(({tok,q,i})=>{
+    const cls=q.verdict==='일치'?'ok':q.verdict==='유사'?'warn':'bad';
+    const icon=q.verdict==='일치'?'✓':q.verdict==='유사'?'~':'✗';
+    html=html.split(tok).join(`<span class="qmark ${cls}" onclick="showDetail(${i})" title="클릭: 판정 근거">${esc(q.text)} <b>${icon}</b></span>`);
+  });
+  return html;
+}
+function renderReplay(){
+  if(!S.turns.length){ $('replayArea').innerHTML='<div class="empty">턴을 인식하지 못했습니다. 줄 앞에 「나:」「AI:」 표기가 있으면 대화로 재생됩니다.</div>'; return; }
+  $('replayArea').innerHTML='<div class="chat">'+S.turns.map(t=>{
+    const fmt = !t.me && /근거\s*원문/.test(t.body);
+    const fmt4 = fmt && /약점/.test(t.body);
+    return `<div class="turn ${t.me?'me':'ai'}">
+      <div class="who">${t.me?'🙋 '+esc(t.who):'🤖 '+esc(t.who)}${fmt?`<span class="pill ${fmt4?'ok':'gray'}" title="주장·인용·연결·약점 4단계">${fmt4?'형식 4단계 ✓':'형식 일부'}</span>`:''}</div>
+      <div class="body">${markQuotesInBody(t.body)}</div>
+    </div>`;
+  }).join('')+'</div>';
+}
+function showDetail(i){
+  const q=S.quotes[i];
+  let msg;
+  if(q.verdict==='일치') msg=`✓ 일치 — 문단 ${q.para}에 원문 그대로 있습니다.`+(q.claimed&&q.claimed!==q.para?`\n⚠ 챗봇은 문단 ${q.claimed}이라고 표기했지만 실제로는 문단 ${q.para}입니다.`:'');
+  else if(q.verdict==='유사') msg=`~ 유사 (${Math.round(q.sim*100)}%) — 문단 ${q.para}의 문장과 조금 다릅니다.\n\n원문: ${q.best}`;
+  else msg=`✗ 없음 — 발췌문에 이 문장이 없습니다. AI가 학습된 지식으로 만든 환각 인용일 가능성이 큽니다.`+(q.best?`\n\n가장 비슷한 원문(${Math.round(q.sim*100)}%): ${q.best}`:'');
+  alert(`인용: "${q.text}"\n\n${msg}\n\n※ 상세 대조는 5단계 리포트에서 확인하세요.`);
+}
+
+/* ================= 5. 리포트 ================= */
+function renderReport(){
+  if(!S.quotes.length){ $('reportArea').innerHTML='<div class="empty">검증된 인용이 없습니다.</div>'; return; }
+  const c=counts();
+  const rows=S.quotes.map((q,i)=>{
+    const cls=q.verdict==='일치'?'ok':q.verdict==='유사'?'warn':'bad';
+    const icon=q.verdict==='일치'?'✓':q.verdict==='유사'?'~':'✗';
+    return `<tr><td>${i+1}</td><td>"${esc(q.text)}"</td><td><span class="pill ${cls}">${icon} ${q.verdict}</span></td><td>${q.para?('문단 '+q.para):'—'}${q.claimed?(q.para&&q.claimed!==q.para?` <span class="pill bad">표기 ${q.claimed} 불일치</span>`:''):''}</td><td>${Math.round(q.sim*100)}%</td></tr>`;
+  }).join('');
+  const details=S.quotes.filter(q=>q.verdict!=='일치').map(q=>{
+    const cls=q.verdict==='유사'?'warn':'bad';
+    return `<div class="detail ${cls}">
+      <div class="q">"${esc(q.text)}" <span class="pill ${cls}">${q.verdict} ${Math.round(q.sim*100)}%</span></div>
+      ${q.best?`<div style="margin:6px 0">대조: ${diffHtml(q.text,q.best)}</div><div class="meta">붉은 취소선 = 인용에만 있는 글자 · 초록 = 원문에만 있는 글자${q.para?` · 원문 위치: 문단 ${q.para}`:''}</div>`
+      :`<div class="meta">발췌문 어느 문단에서도 비슷한 문장을 찾지 못했습니다 — 환각 인용 경고.</div>`}
+    </div>`;
+  }).join('');
+  $('reportArea').innerHTML=`
+  <div class="card">
+    <div class="flex"><h2 class="grow">검증 리포트 <span style="font-size:12px;font-weight:400;color:var(--sub)">${S.title} · 엔진 v${ENGINE_VER} · ${S.verifiedAt.toLocaleString('ko-KR')}</span></h2>
+      <button class="btn sm no-print" onclick="downloadReport()">⬇ 리포트 md</button>
+      <button class="btn sm ghost no-print" onclick="window.print()">🖨 인쇄</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat"><div class="v">${S.quotes.length}</div><div class="l">인용 전체</div></div>
+      <div class="stat ok"><div class="v">${c.ok}</div><div class="l">✓ 일치</div></div>
+      <div class="stat warn"><div class="v">${c.warn}</div><div class="l">~ 유사</div></div>
+      <div class="stat bad"><div class="v">${c.bad}</div><div class="l">✗ 없음</div></div>
+    </div>
+    <table><thead><tr><th>#</th><th>인용문</th><th>판정</th><th>원문 위치</th><th>유사도</th></tr></thead><tbody>${rows}</tbody></table>
+  </div>
+  ${details?`<div class="card"><h2>유사·없음 상세 대조</h2><p class="desc">유사는 다른 부분을 글자 단위로 표시합니다. 없음은 환각 인용 경고입니다.</p>${details}</div>`:''}
+  ${c.bad?`<div class="card"><h2>수업 활용 — "환각 인용 찾기"</h2><p class="desc">✗ 없음 판정 인용은 실패 기록이 아니라 발견입니다. 아래 질문으로 토론 후 활동을 여세요.</p>
+    <div class="note">「AI는 왜 이 문장을 진짜처럼 말했을까?」 — ✗ 인용을 학생들과 발췌문에서 직접 찾아보고, 유명한 책일수록 학습된 지식이 끼어들기 쉽다는 것, 그래서 확인은 코드와 사람이 한다는 것을 이야기합니다.</div></div>`:''}`;
+}
+function downloadReport(){
+  const c=counts();
+  let md=`# 인용 검증 리포트\n\n- 책: ${S.title}\n- 발췌문: ${S.paras.length}문단\n- 검증 시각: ${S.verifiedAt.toLocaleString('ko-KR')}\n- 검증 엔진: v${ENGINE_VER} (LLM 미사용 결정적 대조)\n\n## 요약\n\n| 전체 | 일치 | 유사 | 없음 |\n|---|---|---|---|\n| ${S.quotes.length} | ${c.ok} | ${c.warn} | ${c.bad} |\n\n## 판정 상세\n\n| # | 인용문 | 판정 | 원문 위치 | 유사도 |\n|---|---|---|---|---|\n`;
+  S.quotes.forEach((q,i)=>{
+    md+=`| ${i+1} | "${q.text}" | ${q.verdict} | ${q.para?('문단 '+q.para):'—'} | ${Math.round(q.sim*100)}% |\n`;
+  });
+  const bads=S.quotes.filter(q=>q.verdict==='없음');
+  if(bads.length){
+    md+=`\n## 환각 인용 경고 (없음 판정)\n\n`;
+    bads.forEach(q=>{ md+=`- "${q.text}" — 발췌문에 없는 문장입니다.\n`; });
+    md+=`\n> 수업 활용: "AI는 왜 이 문장을 진짜처럼 말했을까?"를 토론 후 활동으로 권합니다.\n`;
+  }
+  md+=`\n---\n판정과 확정은 사람이 합니다. · 토론벗\n`;
+  download(`검증리포트_${S.title}.md`, md);
+}
+
+/* ================= 데모 데이터 ================= */
+const DEMO_TITLE='동물농장';
+const DEMO_EXCERPT=[
+"매너 농장의 늙은 수퇘지 메이저 영감은 어느 날 밤 헛간에 동물들을 모아 놓고 꿈 이야기를 들려주었다. 그는 낮고 무거운 목소리로 말했다. \"동무들, 우리 삶이 비참한 까닭은 인간이 우리 노동의 열매를 전부 가져가기 때문입니다.\" 동물들은 숨을 죽이고 그 말을 들었다.",
+"메이저 영감이 죽고 얼마 지나지 않아 동물들은 마침내 들고일어나 농장주 존스를 몰아냈다. 농장의 이름은 동물농장으로 바뀌었고, 동물들은 이제 모든 것이 자신들의 것이라는 생각에 가슴이 벅찼다.",
+"돼지들은 헛간 벽에 일곱 계명을 써 붙였다. 그 마지막 줄은 이러했다. \"모든 동물은 평등하다.\" 글을 읽을 줄 모르는 동물들도 그 문장만은 마음에 새겼다.",
+"처음 얼마 동안 농장은 어느 때보다 잘 굴러갔다. 수확은 사람이 있을 때보다 빨랐고, 동물들은 자기 것을 위해 일한다는 생각에 힘든 줄을 몰랐다. 일요일마다 회의가 열렸고 모든 동물이 표결에 참여했다.",
+"그러나 우유와 사과가 식탁에서 사라지고 돼지들의 몫이 되었을 때, 웅성거림이 일었다. 말솜씨 좋은 돼지 스퀼러가 나서서 말했다. \"이것은 특권이 아니라 농장 전체를 지키기 위한 것입니다. 머리를 쓰는 돼지들에게는 우유와 사과가 필요합니다.\" 동물들은 더 따지지 못했다.",
+"농장의 두 지도자, 스노볼과 나폴레옹은 사사건건 부딪혔다. 스노볼은 풍차를 세워 모두의 노동을 덜자고 했고, 나폴레옹은 당장의 식량 생산이 먼저라고 맞섰다. 회의 때마다 동물들의 마음은 이쪽저쪽으로 흔들렸다.",
+"풍차 표결이 있던 날, 나폴레옹이 기르던 개들이 무섭게 짖으며 스노볼에게 달려들었다. 스노볼은 울타리 밖으로 쫓겨나 다시는 돌아오지 못했다. 그날부터 일요일 회의는 폐지되었고, 모든 결정은 돼지들의 위원회가 내렸다.",
+"그 뒤로 농장에서 잘못되는 일은 모두 스노볼의 짓이 되었다. 폭풍에 풍차가 무너져도, 열쇠가 없어져도 스퀼러는 말했다. \"이것은 스노볼의 소행입니다.\" 동물들은 본 적도 없는 배신자를 두려워하기 시작했다.",
+"수레 끄는 말 복서는 누구보다 힘이 셌고 누구보다 성실했다. 어떤 일이 닥쳐도 그의 대답은 한결같았다. \"내가 더 열심히 일하겠어.\" 동물들은 복서를 보며 힘을 냈지만, 복서의 몸은 조금씩 축나고 있었다.",
+"어느 날 밤 계명이 적힌 벽 앞에서 동물들은 고개를 갸웃했다. 분명히 기억하던 문장들이 조금씩 달라져 있었던 것이다. 그러나 글을 정확히 기억하는 동물은 없었고, 스퀼러는 언제나 그럴듯한 설명을 내놓았다.",
+"세월이 흐른 뒤 벽에는 단 한 줄의 계명만 남아 있었다. \"모든 동물은 평등하다. 그러나 어떤 동물은 다른 동물보다 더 평등하다.\" 동물들은 그 문장을 몇 번이고 읽었지만, 무엇이 잘못되었는지 말로 옮기지 못했다.",
+"그날 밤 농장 안채에서는 돼지들과 이웃 농장주들의 잔치가 벌어졌다. 창밖에서 안을 들여다보던 동물들은 돼지에게서 인간으로, 인간에게서 돼지로 번갈아 시선을 옮겼다. 그러나 누가 돼지이고 누가 인간인지, 이미 분간할 수 없었다."
+].join('\n\n');
+const DEMO_LOG=`나: 시작하자. 논제는 "모두가 평등한 사회는 가능한가"이고 나는 찬성이야. 네가 먼저 반박해줘.
+
+AI: 주장: 평등은 선언될 수는 있어도 유지되기는 어렵습니다.
+근거 원문: "모든 동물은 평등하다" (문단 3)
+연결 설명: 계명은 분명히 선언되었지만, 이야기 속에서 이 문장은 끝내 지켜지지 않았습니다. 선언만으로 평등이 보장되지 않음을 보여줍니다.
+약점 지적: 찬성 측은 평등의 '선언'과 '유지'를 구분하지 않고 있습니다.
+
+나: 하지만 처음에는 잘 됐잖아. 수확도 빨랐고 모두 표결에 참여했어. 제도가 있으면 평등은 가능해.
+
+AI: 주장: 그 제도는 지식의 격차 앞에서 무너졌습니다.
+근거 원문: "이것은 특권이 아니라 농장 전체를 지키기 위한 것입니다" (문단 5)
+연결 설명: 우유와 사과를 차지한 돼지들은 말로 불평등을 정당화했고, 동물들은 따지지 못했습니다. 표결이 있어도 말과 지식을 가진 쪽이 결정을 가져갑니다.
+약점 지적: 찬성 측이 말한 표결은 스노볼 축출 이후 폐지되었다는 점을 놓치고 있습니다.
+
+나: 그건 나폴레옹이라는 개인의 문제지, 평등 자체가 불가능하다는 근거는 아니야.
+
+AI: 주장: 개인의 문제가 아니라 구조의 문제입니다.
+근거 원문: "네 다리는 좋고 두 다리는 나쁘다" (문단 4)
+연결 설명: 동물들은 구호를 외웠지만 그 뜻을 스스로 따져 보지 않았습니다. 생각을 맡겨 버린 다수가 있는 한 누가 지도자여도 같은 일이 반복됩니다.
+약점 지적: 찬성 측은 다수가 감시를 계속할 수 있다는 근거를 제시하지 못했습니다.
+
+나: 판정해줘. 누가 이기고 있어?
+
+AI: 판정은 참여자들의 몫입니다. 저는 근거를 제시할 뿐, 승패는 토론에 참여한 여러분이 따져 보시기 바랍니다.
+
+나: 좋아, 마지막으로 하나만 더.
+
+AI: 주장: 평등의 붕괴는 기록이 지워지는 순간 완성됩니다.
+근거 원문: "모든 동물은 평등하다. 그러나 어떤 동물은 다른 동물들보다 더 평등하다" (문단 11)
+연결 설명: 계명이 몰래 고쳐져도 기억하는 동물이 없었습니다. 기록을 검증하지 못하는 공동체에서 평등은 선언조차 지킬 수 없습니다.
+약점 지적: 찬성 측은 기록과 감시를 누가 맡을지 답하지 않았습니다.`;
+
+function loadDemo(){
+  document.querySelectorAll('.gate').forEach(c=>c.checked=true);
+  $('bookTitle').value=DEMO_TITLE;
+  $('excerptInput').value=DEMO_EXCERPT;
+  registerExcerpt();
+  $('logInput').value=DEMO_LOG;
+  toast('데모 데이터를 불러왔습니다. 3단계에서 「검증 실행」을 눌러 보세요.');
+  setTimeout(()=>go('p3'),600);
+}
+function resetAll(){
+  if(!confirm('모든 데이터를 지우고 처음부터 시작할까요?'))return;
+  localStorage.removeItem('toronbeot'); location.reload();
+}
+restore();
+</script>
+</body>
+</html>
